@@ -20,7 +20,7 @@ def pinCalculator():
                     
             
         
-    print ans
+    print  ans
         
         
 pinCalculator()
