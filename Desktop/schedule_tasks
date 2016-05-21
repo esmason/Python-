@@ -1,0 +1,82 @@
+import warnings
+import itertools
+import numpy as np
+import copy
+
+"""trying to find a greedy algorithm that will optimally schedule tasks in order to minimize the weighted cost of tasks in which the weighted cost
+is the sum of the weight of each task, wi  multiplied by the time that task was completed by. The time a task is completed by is the sum of all times,
+ti, up to and including task wi.  In the example below greedy_min_order selects the task that minimizes ti * (the weight of the remaining tasks). This
+algorithm works pretty well but does not guarantee an optimal solution (see examples given below)"""
+
+def brute_force_min_order(task_dictionary):
+    """takes a dictionary of parameters and finds the best task ordering by
+       considering all possible task orders
+    Warning: this algorithm runs in exponential time
+    Args:
+       task_dictionary (dict)  contains key value pairs of the for key: name of a task and a
+       value: a tuple of the form (weight of task, time of task)
+       
+    Returns:
+       optimal ordering and it's score"""
+
+    if len(task_dictionary) > 8:
+        warnings.warn('input size >8 this function runs in exponential time')
+
+    best_score = None
+         
+    for a in itertools.permutations(task_dictionary):
+        weights = np.array([task_dictionary[x][0] for x in a])
+        times = np.cumsum( np.array([task_dictionary[x][1] for x in a]) )
+        
+        score = np.dot(weights, times)
+
+        #note the following is legit python because 'or' is a short-circuit operator
+        if not best_score or score < best_score:
+            best_score = score
+            best_so_far = a
+
+    return (list(best_so_far), best_score)
+        
+            
+            
+
+def greedy_min_order(task_dictionary):
+    ordering = []
+    time_so_far = 0
+    weighted_sum_so_far = 0
+    weights = np.array([task_dictionary[x][0] for x in task_dictionary])
+    total_weight_left = np.sum(weights)
+
+    while len(task_dictionary)>1:
+        #make a list of (weights-wi)* ti and corresponding list of keys of i for all i in task dictionary
+        weight_list, task_list =  map(list, zip(*[(task_dictionary[x][1]*(total_weight_left - task_dictionary[x][0] ), x) for x in task_dictionary]))
+        print(weight_list, task_list)
+        weight_list = np.array(weight_list)
+        next_task = task_list[np.argmin(weight_list)]
+        ordering.append(next_task)
+        time_so_far += task_dictionary[next_task][1]
+        weighted_sum_so_far += task_dictionary[next_task][0]*time_so_far
+        total_weight_left -= task_dictionary[next_task][0]
+
+        del task_dictionary[next_task]
+
+    last_task = task_dictionary.popitem()
+    ordering.append(last_task[0])
+    time_so_far += last_task[1][1]
+    weighted_sum_so_far += last_task[1][0]*time_so_far
+
+
+    return (ordering, weighted_sum_so_far)
+
+        
+        
+    
+
+
+
+task_list = {'z': (4,4), 'a':(1,5), 'b' : (2,3), 'c' : (11, 4), 'd' : (3, 14), 'k' : (3, 14), 'l' : (255, 1)}
+a = greedy_min_order(copy.copy(task_list))
+print(a)
+print(task_list)
+b = brute_force_min_order(task_list)
+print(b)
